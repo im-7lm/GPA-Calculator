@@ -121,7 +121,7 @@ export default function Calculator() {
           },
           {
             element: document.querySelector("#results"),
-            intro: "Your GPA يظهر هنا",
+            intro: "Your GPA Will appear here in real-time as you add courses",
           },
         ],
       })
