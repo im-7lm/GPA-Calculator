@@ -551,13 +551,6 @@ export default function Calculator() {
                               : "Needs Improvement"}
                     </p>
                   </div>
-                  {currentGPA >= 3.5 && (
-                    <div className="pt-2 border-t border-white/10">
-                      <p className="text-green-400 text-xs font-semibold">
-                        Dean's List Eligible
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
