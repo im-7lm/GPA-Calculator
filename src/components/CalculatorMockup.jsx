@@ -61,7 +61,7 @@ export default function CalculatorMockup() {
                 Fall 2025
               </span>
             </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/8">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
               <span className="text-slate-500 text-xs">GPA</span>
               <span className="text-white font-bold text-sm tabular-nums">
                 {gpa}
@@ -140,16 +140,6 @@ export default function CalculatorMockup() {
                 {gpa}
               </p>
             </div>
-          </div>
-
-          {/* Standing badge */}
-          <div className="flex items-center gap-2">
-            <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-              <span className="text-emerald-400 text-xs font-medium">
-                Dean's List
-              </span>
-            </div>
-            <span className="text-slate-600 text-xs">4.0 scale</span>
           </div>
 
           {/* CTA — example notice + button */}
