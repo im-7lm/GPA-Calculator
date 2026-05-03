@@ -30,9 +30,24 @@ export default function Calculator() {
   const [gradeSystem, setGradeSystem] = useState(DEFAULT_GRADES);
   const [showGradeEditor, setShowGradeEditor] = useState(false);
   const [editingGrade, setEditingGrade] = useState(null);
-  const [courses, setCourses] = useState([
-    // { id: 1, name: "Introduction to CS", credits: 3, grade: "A" },
-  ]);
+  const [courses, setCourses] = useState(() => {
+    try {
+      const saved = localStorage.getItem("courses");
+      return saved ? JSON.parse(saved) : [];
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("courses", JSON.stringify(courses));
+    } catch (err) {
+      console.error("Error saving courses", err);
+    }
+  }, [courses]);
+
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [newCourse, setNewCourse] = useState({
     name: "",
@@ -46,7 +61,7 @@ export default function Calculator() {
     if (courses.length === 0) return 0;
     const totalWeightedPoints = courses.reduce((sum, course) => {
       const grade = gradeSystem.find((g) => g.grade === course.grade);
-      return sum + (grade ? grade.points * course.credits : 0);
+      return sum + (grade ? grade.points * Number(course.credits) : 0);
     }, 0);
     const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
     return totalCredits > 0
@@ -301,8 +316,8 @@ export default function Calculator() {
                         </label>
                         <input
                           type="number"
-                          min="0.5"
-                          step="0.5"
+                          min="1"
+                          step="1"
                           value={newCourse.credits}
                           onChange={(e) =>
                             setNewCourse({
