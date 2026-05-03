@@ -36,7 +36,7 @@ export default function Calculator() {
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [newCourse, setNewCourse] = useState({
     name: "",
-    credits: 3,
+    credits: "3",
     grade: "A",
   });
   const [previousGPA, setPreviousGPA] = useState("");
@@ -72,12 +72,30 @@ export default function Calculator() {
   const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
 
   const addCourse = () => {
-    if (newCourse.name.trim() === "" || newCourse.credits <= 0) return;
-    setCourses([...courses, { ...newCourse, id: Date.now() }]);
-    setNewCourse({ name: "", credits: 3, grade: "A" });
+    const credits = parseFloat(newCourse.credits);
+
+    if (credits <= 0) return;
+
+    const courseName = newCourse.name.trim() || `Course ${courses.length + 1}`;
+
+    setCourses([
+      ...courses,
+      {
+        ...newCourse,
+        name: courseName,
+        credits,
+        id: Date.now(),
+      },
+    ]);
+
+    setNewCourse({
+      name: "",
+      credits: "3",
+      grade: "A",
+    });
+
     setShowCourseForm(false);
   };
-
   const removeCourse = (id) => {
     setCourses(courses.filter((c) => c.id !== id));
   };
@@ -289,10 +307,10 @@ export default function Calculator() {
                           onChange={(e) =>
                             setNewCourse({
                               ...newCourse,
-                              credits: parseFloat(e.target.value) || 0,
+                              credits: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500"
+                          className="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-white/20 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                         />
                       </div>
                       <div>
@@ -307,9 +325,12 @@ export default function Calculator() {
                               grade: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500">
+                          className="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-white/20 text-white focus:outline-none focus:border-blue-500">
                           {gradeSystem.map((g) => (
-                            <option key={g.grade} value={g.grade}>
+                            <option
+                              key={g.grade}
+                              value={g.grade}
+                              className="bg-[#0f172a] text-white">
                               {g.grade}
                             </option>
                           ))}
@@ -362,9 +383,12 @@ export default function Calculator() {
                             onChange={(e) =>
                               updateCourse(course.id, "grade", e.target.value)
                             }
-                            className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500">
+                            className="px-3 py-2 rounded-lg bg-[#0f172a] border border-white/20 text-white focus:outline-none focus:border-blue-500">
                             {gradeSystem.map((g) => (
-                              <option key={g.grade} value={g.grade}>
+                              <option
+                                key={g.grade}
+                                value={g.grade}
+                                className="bg-[#0f172a] text-white">
                                 {g.grade}
                               </option>
                             ))}
@@ -469,21 +493,14 @@ export default function Calculator() {
                       {currentGPA >= 3.8
                         ? "Excellent"
                         : currentGPA >= 3.5
-                          ? "Great"
+                          ? "Very Good"
                           : currentGPA >= 3.0
                             ? "Good"
                             : currentGPA >= 2.0
-                              ? "Fair"
+                              ? "Satisfactory"
                               : "Needs Improvement"}
                     </p>
                   </div>
-                  {currentGPA >= 3.5 && (
-                    <div className="pt-2 border-t border-white/10">
-                      <p className="text-green-400 text-xs font-semibold">
-                        Dean's List Eligible
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
