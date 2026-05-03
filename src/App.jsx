@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Calculator from "./pages/calculator";
+import Calculator from "./pages/Calculator";
 import ScoreCalculator from "./pages/ScoreCalculator";
 
 function App() {
