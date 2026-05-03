@@ -1,14 +1,12 @@
-import { useState } from "react";
-import { useEffect } from "react";
-import introJs from "intro.js";
-import "intro.js/minified/introjs.min.css";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
-  ChevronDown,
   Plus,
   Trash2,
   CreditCard as Edit2,
   Check,
   X,
+  ArrowDownToLine,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 
@@ -26,8 +24,27 @@ const DEFAULT_GRADES = [
   { grade: "F", points: 0.0 },
 ];
 
+const TRANSFER_KEY = "gpaCalc_transfer";
+
 export default function Calculator() {
-  const [gradeSystem, setGradeSystem] = useState(DEFAULT_GRADES);
+  const [gradeSystem, setGradeSystem] = useState(() => {
+    try {
+      const saved = localStorage.getItem("gradeSystem");
+      return saved ? JSON.parse(saved) : DEFAULT_GRADES;
+    } catch (err) {
+      console.error(err);
+      return DEFAULT_GRADES;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("gradeSystem", JSON.stringify(gradeSystem));
+    } catch (err) {
+      console.error("Error saving grade system", err);
+    }
+  }, [gradeSystem]);
+
   const [showGradeEditor, setShowGradeEditor] = useState(false);
   const [editingGrade, setEditingGrade] = useState(null);
   const [courses, setCourses] = useState(() => {
@@ -56,6 +73,23 @@ export default function Calculator() {
   });
   const [previousGPA, setPreviousGPA] = useState("");
   const [previousCredits, setPreviousCredits] = useState("");
+  const [transferNotice, setTransferNotice] = useState(false);
+
+  useEffect(() => {
+    try {
+      const transfer = localStorage.getItem(TRANSFER_KEY);
+      if (transfer) {
+        const transferred = JSON.parse(transfer);
+        if (Array.isArray(transferred) && transferred.length > 0) {
+          setCourses(transferred);
+          setTransferNotice(true);
+          localStorage.removeItem(TRANSFER_KEY);
+          const timer = setTimeout(() => setTransferNotice(false), 5000);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch {}
+  }, []);
 
   const calculateGPA = () => {
     if (courses.length === 0) return 0;
@@ -63,7 +97,7 @@ export default function Calculator() {
       const grade = gradeSystem.find((g) => g.grade === course.grade);
       return sum + (grade ? grade.points * Number(course.credits) : 0);
     }, 0);
-    const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+    const totalCredits = courses.reduce((sum, c) => sum + Number(c.credits), 0);
     return totalCredits > 0
       ? (totalWeightedPoints / totalCredits).toFixed(2)
       : 0;
@@ -73,7 +107,10 @@ export default function Calculator() {
     if (!previousGPA || !previousCredits || previousCredits === "0")
       return null;
     const currentGPA = parseFloat(calculateGPA());
-    const currentCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+    const currentCredits = courses.reduce(
+      (sum, c) => sum + Number(c.credits),
+      0,
+    );
     const prevGPA = parseFloat(previousGPA);
     const prevCredits = parseFloat(previousCredits);
 
@@ -84,33 +121,15 @@ export default function Calculator() {
 
   const currentGPA = calculateGPA();
   const cgpa = calculateCGPA();
-  const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+  const totalCredits = courses.reduce((sum, c) => sum + Number(c.credits), 0);
 
   const addCourse = () => {
-    const credits = parseFloat(newCourse.credits);
-
-    if (credits <= 0) return;
-
-    const courseName = newCourse.name.trim() || `Course ${courses.length + 1}`;
-
-    setCourses([
-      ...courses,
-      {
-        ...newCourse,
-        name: courseName,
-        credits,
-        id: Date.now(),
-      },
-    ]);
-
-    setNewCourse({
-      name: "",
-      credits: "3",
-      grade: "A",
-    });
-
+    if (newCourse.name.trim() === "" || newCourse.credits <= 0) return;
+    setCourses([...courses, { ...newCourse, id: Date.now() }]);
+    setNewCourse({ name: "", credits: "3", grade: "A" });
     setShowCourseForm(false);
   };
+
   const removeCourse = (id) => {
     setCourses(courses.filter((c) => c.id !== id));
   };
@@ -122,9 +141,11 @@ export default function Calculator() {
   };
 
   const updateGrade = (index) => {
-    if (editingGrade && editingGrade.points >= 0) {
+    if (editingGrade && editingGrade.points !== "") {
       const updated = [...gradeSystem];
-      updated[index].points = editingGrade.points;
+
+      updated[index].points = Number(editingGrade.points);
+
       setGradeSystem(updated);
       setEditingGrade(null);
     }
@@ -180,11 +201,11 @@ export default function Calculator() {
         <div className="max-w-7xl mx-auto px-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-8">
-            <a
-              href="/"
+            <Link
+              to="/"
               className="text-blue-400 hover:text-blue-300 transition-colors">
               Home
-            </a>
+            </Link>
             <span className="text-slate-600">/</span>
             <span className="text-slate-400">GPA Calculator</span>
           </div>
@@ -199,6 +220,20 @@ export default function Calculator() {
               real-time.
             </p>
           </div>
+
+          {/* Transfer notice */}
+          {transferNotice && (
+            <div className="mb-6 flex items-center gap-3 px-5 py-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm">
+              <ArrowDownToLine size={16} />
+              Courses transferred from Score Calculator. Grades have been
+              applied automatically.
+              <button
+                onClick={() => setTransferNotice(false)}
+                className="ml-auto text-cyan-400 hover:text-cyan-200">
+                <X size={14} />
+              </button>
+            </div>
+          )}
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
@@ -254,7 +289,7 @@ export default function Calculator() {
                           onChange={(e) =>
                             setEditingGrade({
                               grade: g.grade,
-                              points: parseFloat(e.target.value) || 0,
+                              points: e.target.value,
                             })
                           }
                           className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
@@ -284,13 +319,10 @@ export default function Calculator() {
               </div>
 
               {/* Courses Section */}
-              <div
-                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6"
-                id="courses-section">
+              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-white">Courses</h2>
                   <button
-                    id="add-course-btn"
                     onClick={() => setShowCourseForm(!showCourseForm)}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:opacity-90 transition-opacity">
                     <Plus size={16} />
@@ -369,10 +401,15 @@ export default function Calculator() {
 
                 {courses.length === 0 ? (
                   <div className="py-12 text-center">
-                    <p className="text-slate-400">
+                    <p className="text-slate-400 mb-3">
                       No courses added yet. Add your first course to calculate
                       your GPA.
                     </p>
+                    <Link
+                      to="/score"
+                      className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
+                      Or calculate scores first with the Score Calculator
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -389,7 +426,7 @@ export default function Calculator() {
                               {course.name || "Unnamed Course"}
                             </p>
                             <p className="text-slate-400 text-sm">
-                              {course.credits} credits • {course.grade} (
+                              {course.credits} credits &bull; {course.grade} (
                               {grade?.points.toFixed(1)} pts)
                             </p>
                           </div>
@@ -460,7 +497,7 @@ export default function Calculator() {
             </div>
 
             {/* Results Sidebar */}
-            <div className="space-y-4" id="results">
+            <div className="space-y-4">
               {/* Current GPA Card */}
               <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-6">
                 <p className="text-slate-400 text-sm mb-2">
@@ -483,11 +520,9 @@ export default function Calculator() {
                 </p>
               </div>
 
-              {/* CGPA Card (if applicable) */}
+              {/* CGPA Card */}
               {cgpa && (
-                <div
-                  cgpa
-                  className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-teal-500/5 p-6">
+                <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-teal-500/5 p-6">
                   <p className="text-slate-400 text-sm mb-2">Cumulative GPA</p>
                   <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent">
                     {cgpa}
@@ -516,8 +551,27 @@ export default function Calculator() {
                               : "Needs Improvement"}
                     </p>
                   </div>
+                  {currentGPA >= 3.5 && (
+                    <div className="pt-2 border-t border-white/10">
+                      <p className="text-green-400 text-xs font-semibold">
+                        Dean's List Eligible
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Link to Score Calculator */}
+              <Link
+                to="/score"
+                className="block rounded-2xl border border-white/10 bg-white/5 p-6 hover:border-white/20 transition-colors group">
+                <p className="text-slate-400 text-sm mb-1">
+                  Need to calculate scores?
+                </p>
+                <p className="text-blue-400 text-sm font-medium group-hover:text-blue-300 transition-colors">
+                  Open Score Calculator &rarr;
+                </p>
+              </Link>
             </div>
           </div>
         </div>

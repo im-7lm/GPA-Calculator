@@ -53,6 +53,11 @@ export default function Navbar() {
             Calculator
           </Link>
           <Link
+            to="/score"
+            className="text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200 px-4 py-2">
+            Score Calc
+          </Link>
+          <Link
             to="/calc"
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold hover:opacity-90 transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02]">
             Get Started
